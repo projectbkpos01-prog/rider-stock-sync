@@ -1,104 +1,115 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Package, TrendingUp, Users } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Package, Users, TrendingUp, Warehouse, LogOut } from "lucide-react";
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    totalRevenue: 0,
-    totalTransactions: 0,
-    totalProducts: 0,
-    activeRiders: 0,
-  });
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      const [transactionsResult, productsResult, ridersResult] = await Promise.all([
-        supabase
-          .from("transactions")
-          .select("total_amount"),
-        supabase
-          .from("products")
-          .select("id", { count: "exact", head: true }),
-        supabase
-          .from("user_roles")
-          .select("id", { count: "exact", head: true })
-          .eq("role", "rider"),
-      ]);
-
-      const totalRevenue = transactionsResult.data?.reduce((sum, t) => sum + Number(t.total_amount), 0) || 0;
-
-      setStats({
-        totalRevenue,
-        totalTransactions: transactionsResult.data?.length || 0,
-        totalProducts: productsResult.count || 0,
-        activeRiders: ridersResult.count || 0,
-      });
-    };
-
-    fetchStats();
-  }, []);
-
-  const statCards = [
-    {
-      title: "Total Revenue",
-      value: `Rp ${stats.totalRevenue.toLocaleString()}`,
-      icon: DollarSign,
-      gradient: "gradient-success",
-    },
-    {
-      title: "Transactions",
-      value: stats.totalTransactions.toString(),
-      icon: TrendingUp,
-      gradient: "gradient-primary",
-    },
-    {
-      title: "Products",
-      value: stats.totalProducts.toString(),
-      icon: Package,
-      gradient: "gradient-primary",
-    },
-    {
-      title: "Active Riders",
-      value: stats.activeRiders.toString(),
-      icon: Users,
-      gradient: "gradient-success",
-    },
-  ];
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your warehouse operations</p>
-      </div>
+    <div className="min-h-screen bg-gradient-card">
+      <nav className="bg-sidebar border-b border-sidebar-border">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-sidebar-foreground">Rider Stock Sync</h1>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => navigate("/products")} className="text-sidebar-foreground">
+              Products
+            </Button>
+            <Button variant="ghost" onClick={signOut} className="text-sidebar-foreground">
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
+        </div>
+      </nav>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Card key={stat.title} className="overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <div className={`p-2 rounded-lg ${stat.gradient}`}>
-                <stat.icon className="h-4 w-4 text-white" />
-              </div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2">Admin Dashboard</h2>
+          <p className="text-muted-foreground">Welcome back! Here's your business overview.</p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+              <TrendingUp className="h-4 w-4 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-2xl font-bold">$0.00</div>
+              <p className="text-xs text-muted-foreground">No sales yet</p>
             </CardContent>
           </Card>
-        ))}
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Transaction history and distribution logs will be displayed here.
-          </p>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Products</CardTitle>
+              <Package className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">Total products</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Active Riders</CardTitle>
+              <Users className="h-4 w-4 text-primary" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">Registered riders</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Warehouse Stock</CardTitle>
+              <Warehouse className="h-4 w-4 text-accent" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">0</div>
+              <p className="text-xs text-muted-foreground">Items in warehouse</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>Manage your inventory and operations</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <Button
+              onClick={() => navigate("/products")}
+              className="h-24 flex-col gap-2"
+              variant="outline"
+            >
+              <Package className="h-6 w-6" />
+              Manage Products
+            </Button>
+            <Button
+              onClick={() => {}}
+              className="h-24 flex-col gap-2"
+              variant="outline"
+            >
+              <Warehouse className="h-6 w-6" />
+              Warehouse Stock
+            </Button>
+            <Button
+              onClick={() => {}}
+              className="h-24 flex-col gap-2"
+              variant="outline"
+            >
+              <Users className="h-6 w-6" />
+              Distribute to Riders
+            </Button>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 };
